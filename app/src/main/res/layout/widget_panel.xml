@@ -17,21 +17,21 @@
         android:layout_marginEnd="2dp" />
 
     <ImageButton
+        android:id="@+id/btn_set_position"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_target"
+        android:background="@null"
+        android:contentDescription="Set Position"
+        android:layout_marginEnd="2dp" />
+
+    <ImageButton
         android:id="@+id/btn_play"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:src="@drawable/ic_play"
         android:background="@null"
         android:contentDescription="Play"
-        android:layout_marginEnd="2dp" />
-
-    <ImageButton
-        android:id="@+id/btn_pause"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_pause"
-        android:background="@null"
-        android:contentDescription="Pause"
         android:layout_marginEnd="2dp" />
 
     <ImageButton
