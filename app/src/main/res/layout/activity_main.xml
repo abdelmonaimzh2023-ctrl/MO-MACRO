@@ -1,110 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp"
     android:background="@color/dark_bg"
-    android:gravity="center">
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="MO MACRO"
-        android:textSize="32sp"
-        android:textColor="@color/accent"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Control Panel"
-        android:textSize="14sp"
-        android:textColor="#AAFFFFFF"
-        android:layout_marginBottom="48dp" />
-
-    <!-- Overlay Status Card -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
-        android:background="#22FFFFFF"
-        android:layout_marginBottom="12dp">
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center">
 
         <TextView
-            android:id="@+id/tv_status_overlay"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="● Stopped"
+            android:text="MO MACRO"
+            android:textSize="32sp"
+            android:textColor="@color/accent"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Control Panel"
+            android:textSize="14sp"
+            android:textColor="#AAFFFFFF"
+            android:layout_marginBottom="40dp" />
+
+        <!-- Overlay Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/panel_bg"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_status_overlay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="● Stopped"
+                    android:textSize="16sp"
+                    android:textColor="#888888" />
+
+                <Button
+                    android:id="@+id/btn_toggle_overlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Start Overlay"
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:backgroundTint="#4CAF50"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_hint_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Start overlay to show floating widget"
+                android:textSize="12sp"
+                android:textColor="#888888"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Accessibility Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/panel_bg"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_status_accessibility"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="● Not Enabled"
+                    android:textSize="16sp"
+                    android:textColor="#FF9800" />
+
+                <Button
+                    android:id="@+id/btn_accessibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Enable"
+                    android:textSize="14sp"
+                    android:textColor="@color/dark_bg"
+                    android:backgroundTint="#FF9800"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_hint_accessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Required for macro to work. Tap to enable."
+                android:textSize="12sp"
+                android:textColor="#FF9800"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Settings Button -->
+        <Button
+            android:id="@+id/btn_settings"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="⚙ Settings"
             android:textSize="16sp"
-            android:textColor="#E94560" />
+            android:textColor="@color/dark_bg"
+            android:backgroundTint="@color/white"
+            android:layout_marginBottom="12dp" />
 
+        <!-- Load Script Button -->
         <Button
-            android:id="@+id/btn_toggle_overlay"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:text="Start Overlay"
-            android:textSize="14sp"
-            android:backgroundTint="@color/accent"
+            android:id="@+id/btn_load_script"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="📜 Load Script"
+            android:textSize="16sp"
             android:textColor="@color/white"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
-
-    </LinearLayout>
-
-    <!-- Accessibility Card -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
-        android:background="#22FFFFFF"
-        android:layout_marginBottom="12dp">
+            android:backgroundTint="#9C27B0"
+            android:layout_marginBottom="24dp" />
 
         <TextView
-            android:id="@+id/tv_status_accessibility"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Check Settings"
-            android:textSize="14sp"
-            android:textColor="#FFC107" />
-
-        <Button
-            android:id="@+id/btn_accessibility"
             android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:text="Enable"
-            android:textSize="14sp"
-            android:backgroundTint="#FFC107"
-            android:textColor="#1A1A2E"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
+            android:layout_height="wrap_content"
+            android:text="MO MACRO • com.monaim.studio • v1.0.0"
+            android:textSize="10sp"
+            android:textColor="#44FFFFFF"
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
-
-    <!-- Settings Button -->
-    <Button
-        android:id="@+id/btn_settings"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Settings"
-        android:textSize="16sp"
-        android:backgroundTint="@color/white"
-        android:textColor="@color/dark_bg"
-        android:layout_marginBottom="24dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="com.monaim.studio"
-        android:textSize="10sp"
-        android:textColor="#44FFFFFF"
-        android:layout_marginTop="24dp" />
-
-</LinearLayout>
+</ScrollView>
