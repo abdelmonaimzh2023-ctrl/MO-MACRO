@@ -1,0 +1,6 @@
+<resources>
+    <color name="dark_bg">#1A1A2E</color>
+    <color name="accent">#E94560</color>
+    <color name="white">#FFFFFF</color>
+    <color name="overlay_bg">#CC1A1A2E</color>
+</resources>

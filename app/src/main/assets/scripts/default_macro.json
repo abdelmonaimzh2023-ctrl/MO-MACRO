@@ -1,0 +1,47 @@
+{
+    "name": "Default Macro",
+    "description": "Default MO MACRO script - Single tap at center with swipe up",
+    "version": 1,
+    "actions": [
+        {
+            "type": "delay",
+            "x": 0,
+            "y": 0,
+            "endX": 0,
+            "endY": 0,
+            "duration": 0,
+            "delay": 3000,
+            "repeat": 0
+        },
+        {
+            "type": "tap",
+            "x": 540,
+            "y": 1200,
+            "endX": 0,
+            "endY": 0,
+            "duration": 0,
+            "delay": 100,
+            "repeat": 0
+        },
+        {
+            "type": "delay",
+            "x": 0,
+            "y": 0,
+            "endX": 0,
+            "endY": 0,
+            "duration": 0,
+            "delay": 50,
+            "repeat": 0
+        },
+        {
+            "type": "swipe",
+            "x": 540,
+            "y": 1200,
+            "endX": 540,
+            "endY": 600,
+            "duration": 150,
+            "delay": 50,
+            "repeat": 0
+        }
+    ]
+}
