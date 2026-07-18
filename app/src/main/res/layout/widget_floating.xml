@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:orientation="vertical"
-    android:gravity="center">
-
-    <ImageView
-        android:id="@+id/iv_widget_icon"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:src="@drawable/ic_float_widget"
-        android:contentDescription="MO MACRO"
-        android:alpha="0.9" />
-
-</LinearLayout>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fl_widget_container"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent" />

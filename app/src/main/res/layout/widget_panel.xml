@@ -8,13 +8,22 @@
     android:gravity="center">
 
     <ImageButton
+        android:id="@+id/btn_hold"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_hold"
+        android:background="@null"
+        android:contentDescription="Hold"
+        android:layout_marginEnd="2dp" />
+
+    <ImageButton
         android:id="@+id/btn_play"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:src="@drawable/ic_play"
         android:background="@null"
         android:contentDescription="Play"
-        android:layout_marginEnd="4dp" />
+        android:layout_marginEnd="2dp" />
 
     <ImageButton
         android:id="@+id/btn_pause"
@@ -23,7 +32,7 @@
         android:src="@drawable/ic_pause"
         android:background="@null"
         android:contentDescription="Pause"
-        android:layout_marginEnd="4dp" />
+        android:layout_marginEnd="2dp" />
 
     <ImageButton
         android:id="@+id/btn_stop"
@@ -32,7 +41,7 @@
         android:src="@drawable/ic_stop"
         android:background="@null"
         android:contentDescription="Stop"
-        android:layout_marginEnd="4dp" />
+        android:layout_marginEnd="2dp" />
 
     <ImageButton
         android:id="@+id/btn_record"
