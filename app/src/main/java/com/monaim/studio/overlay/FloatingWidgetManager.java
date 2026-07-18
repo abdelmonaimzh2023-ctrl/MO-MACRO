@@ -12,8 +12,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.monaim.studio.macro.TouchRecorder;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +39,6 @@ public class FloatingWidgetManager extends Service {
         dots = new ArrayList<>();
         dotCounter = prefs.getInt("dot_count", 0);
 
-        // استعادة الأيقونات المحفوظة
         for (int i = 0; i < dotCounter; i++) {
             String id = "macro_" + i;
             try {
@@ -51,6 +48,7 @@ public class FloatingWidgetManager extends Service {
                     () -> handleHoldStop(dot),
                     () -> removeDot(dot)
                 );
+                dot.setLongPressCallback(() -> openEditor(dot));
                 dot.attach();
                 dots.add(dot);
             } catch (Exception e) {
@@ -58,7 +56,6 @@ public class FloatingWidgetManager extends Service {
             }
         }
 
-        // أيقونة افتراضية إذا لا يوجد شيء
         if (dots.isEmpty()) {
             addNewDot();
         }
@@ -88,7 +85,6 @@ public class FloatingWidgetManager extends Service {
         registerReceiver(updateReceiver, f);
     }
 
-    // ========== ADD / REMOVE ==========
     public void addNewDot() {
         if (dots.size() >= MAX_DOTS) {
             Toast.makeText(this, "Max " + MAX_DOTS + " dots reached", Toast.LENGTH_SHORT).show();
@@ -102,9 +98,11 @@ public class FloatingWidgetManager extends Service {
                 () -> handleHoldStop(dot),
                 () -> removeDot(dot)
             );
+            dot.setLongPressCallback(() -> openEditor(dot));
             dot.attach();
             dots.add(dot);
             prefs.edit().putInt("dot_count", dotCounter).apply();
+            Toast.makeText(this, "New dot added: " + id, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e(TAG, "Add dot failed", e);
         }
@@ -142,10 +140,10 @@ public class FloatingWidgetManager extends Service {
         try {
             Intent intent = new Intent("com.monaim.studio.HOLD_START");
             intent.setPackage(getPackageName());
-            intent.putExtra("x1", dot.getActionX1());
-            intent.putExtra("y1", dot.getActionY1());
-            intent.putExtra("x2", dot.getActionX2());
-            intent.putExtra("y2", dot.getActionY2());
+            intent.putExtra("x1", (float)dot.getActionX1());
+            intent.putExtra("y1", (float)dot.getActionY1());
+            intent.putExtra("x2", (float)dot.getActionX2());
+            intent.putExtra("y2", (float)dot.getActionY2());
             intent.putExtra("duration", dot.getActionDuration());
             sendBroadcast(intent);
         } catch (Exception e) { Log.e(TAG, "Hold start error", e); }
@@ -157,6 +155,23 @@ public class FloatingWidgetManager extends Service {
             intent.setPackage(getPackageName());
             sendBroadcast(intent);
         } catch (Exception e) { Log.e(TAG, "Hold stop error", e); }
+    }
+
+    // ========== EDITOR ==========
+    private void openEditor(MacroDot dot) {
+        handler.post(() -> {
+            try {
+                DotActionEditor editor = new DotActionEditor(FloatingWidgetManager.this, dot,
+                    new DotActionEditor.OnEditorListener() {
+                        @Override public void onSaved() { refreshAllDots(); }
+                        @Override public void onDeleted(MacroDot d) { removeDot(d); }
+                        @Override public void onClosed() {}
+                    });
+                editor.show();
+            } catch (Exception e) {
+                Log.e(TAG, "Editor open failed", e);
+            }
+        });
     }
 
     @Override

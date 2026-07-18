@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/panel_bg">
+
+    <TextView
+        android:id="@+id/tv_dot_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Configure Action"
+        android:textColor="@color/accent"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="12dp" />
+
+    <!-- Action Type -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Action Type:"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        android:paddingBottom="4dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="12dp">
+
+        <Button
+            android:id="@+id/btn_type_tap"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Tap"
+            android:textSize="11sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#444"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_type_swipe"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Swipe"
+            android:textSize="11sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#444"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_type_hold"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Hold"
+            android:textSize="11sp"
+            android:textColor="#FFF"
+            android:backgroundTint="@color/accent"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_type_auto"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Auto"
+            android:textSize="11sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#444" />
+
+    </LinearLayout>
+
+    <!-- Coordinates Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📌 Coordinates (X, Y):"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        android:paddingBottom="4dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="4dp">
+
+        <EditText
+            android:id="@+id/et_x1"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="Start X"
+            android:textColor="#FFF"
+            android:textColorHint="#666"
+            android:inputType="numberDecimal"
+            android:background="#22FFFFFF"
+            android:padding="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <EditText
+            android:id="@+id/et_y1"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="Start Y"
+            android:textColor="#FFF"
+            android:textColorHint="#666"
+            android:inputType="numberDecimal"
+            android:background="#22FFFFFF"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_end_coords"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/et_x2"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="End X"
+            android:textColor="#FFF"
+            android:textColorHint="#666"
+            android:inputType="numberDecimal"
+            android:background="#22FFFFFF"
+            android:padding="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <EditText
+            android:id="@+id/et_y2"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="End Y"
+            android:textColor="#FFF"
+            android:textColorHint="#666"
+            android:inputType="numberDecimal"
+            android:background="#22FFFFFF"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <!-- Duration -->
+    <LinearLayout
+        android:id="@+id/ll_duration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Duration (ms):"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/et_duration"
+            android:layout_width="80dp"
+            android:layout_height="36dp"
+            android:text="100"
+            android:textColor="#FFF"
+            android:inputType="number"
+            android:background="#22FFFFFF"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <!-- Repeat Count for Auto Click -->
+    <LinearLayout
+        android:id="@+id/ll_repeat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Repeat:"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/et_repeat_count"
+            android:layout_width="60dp"
+            android:layout_height="36dp"
+            android:text="0"
+            android:textColor="#FFF"
+            android:inputType="number"
+            android:background="#22FFFFFF"
+            android:padding="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delay:"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/et_repeat_delay"
+            android:layout_width="60dp"
+            android:layout_height="36dp"
+            android:text="100"
+            android:textColor="#FFF"
+            android:inputType="number"
+            android:background="#22FFFFFF"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="12dp">
+
+        <Button
+            android:id="@+id/btn_record_position"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="🎯 Record"
+            android:textSize="12sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#FF9800"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_test_action"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="▶ Test"
+            android:textSize="12sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#4CAF50"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_save_action"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="💾 Save"
+            android:textSize="12sp"
+            android:textColor="#FFF"
+            android:backgroundTint="#2196F3" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_delete_dot"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:text="🗑 Delete This Dot"
+        android:textSize="12sp"
+        android:textColor="#FFF"
+        android:backgroundTint="#E94560"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/btn_close_editor"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:text="Close"
+        android:textSize="12sp"
+        android:textColor="#AAA"
+        android:backgroundTint="#333"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

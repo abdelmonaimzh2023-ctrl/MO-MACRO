@@ -29,9 +29,11 @@ public class MacroDot extends View {
     private int initialX, initialY;
     private long downTime;
     private static final long HOLD_MS = 120;
+    private static final long LONG_PRESS_MS = 500;
+    private boolean longPressTriggered = false;
 
-    private Runnable onHoldStartCallback, onHoldStopCallback;
-    private Runnable onRequestDelete;
+    private Runnable onHoldStartCallback, onHoldStopCallback, onRequestDelete;
+    private Runnable onLongPressCallback;
 
     public MacroDot(Context context, String id, SharedPreferences prefs) {
         super(context);
@@ -50,6 +52,10 @@ public class MacroDot extends View {
         this.onRequestDelete = delete;
     }
 
+    public void setLongPressCallback(Runnable cb) {
+        this.onLongPressCallback = cb;
+    }
+
     public String getDotId() { return dotId; }
     public String getActionType() { return actionType; }
     public int getActionX1() { return actionX1; }
@@ -58,7 +64,6 @@ public class MacroDot extends View {
     public int getActionY2() { return actionY2; }
     public long getActionDuration() { return actionDuration; }
 
-    // ========== LOAD / SAVE ==========
     public void loadPrefs(SharedPreferences p) {
         dotColor = p.getInt("dot_" + dotId + "_color", Color.RED);
         ringColor = p.getInt("dot_" + dotId + "_ring_color", Color.WHITE);
@@ -98,11 +103,12 @@ public class MacroDot extends View {
         e.putInt("dot_" + dotId + "_x2", actionX2);
         e.putInt("dot_" + dotId + "_y2", actionY2);
         e.putLong("dot_" + dotId + "_duration", actionDuration);
-        e.putInt("dot_" + dotId + "_x", params != null ? params.x : 100);
-        e.putInt("dot_" + dotId + "_y", params != null ? params.y : 300);
+        if (params != null) {
+            e.putInt("dot_" + dotId + "_x", params.x);
+            e.putInt("dot_" + dotId + "_y", params.y);
+        }
     }
 
-    // ========== WINDOW MANAGEMENT ==========
     public void attach() {
         try {
             int size = (int)(ringR * 2 + 10);
@@ -145,7 +151,6 @@ public class MacroDot extends View {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // ========== TOUCH ==========
     private class DotTouchListener implements OnTouchListener {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -159,6 +164,7 @@ public class MacroDot extends View {
                         downTime = System.currentTimeMillis();
                         isDragging = false;
                         holdTriggered = false;
+                        longPressTriggered = false;
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
@@ -176,6 +182,14 @@ public class MacroDot extends View {
                             onHoldStart();
                             return true;
                         }
+                        if (!isDragging && !longPressTriggered && (System.currentTimeMillis() - downTime) >= LONG_PRESS_MS) {
+                            longPressTriggered = true;
+                            if (onLongPressCallback != null) {
+                                onHoldStop();
+                                onLongPressCallback.run();
+                            }
+                            return true;
+                        }
                         return false;
 
                     case MotionEvent.ACTION_UP:
@@ -183,9 +197,6 @@ public class MacroDot extends View {
                         if (holdTriggered) onHoldStop();
                         isHolding = false;
                         holdTriggered = false;
-                        if (!isDragging && (System.currentTimeMillis() - downTime) < 300) {
-                            // نقر سريع = فتح/إغلاق اللوحة (يتحكم فيه المدير)
-                        }
                         return false;
                 }
             } catch (Exception e) { e.printStackTrace(); }
