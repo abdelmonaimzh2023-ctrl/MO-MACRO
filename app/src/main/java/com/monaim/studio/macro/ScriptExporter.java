@@ -1,18 +1,18 @@
 package com.monaim.studio.macro;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.core.content.FileProvider;
-
+import com.monaim.studio.ui.UIHelper;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptExporter {
@@ -21,136 +21,111 @@ public class ScriptExporter {
     public static final String EXPORT_DIR = "MO_MACRO_Exports";
 
     public static boolean exportToFile(Context context, String jsonContent, String fileName) {
+        if (!UIHelper.hasStoragePermission(context)) {
+            if (context instanceof Activity) {
+                UIHelper.requestStoragePermission((Activity) context);
+            } else {
+                UIHelper.toastError(context, "Storage permission required");
+            }
+            return false;
+        }
+
         try {
             File exportDir = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR);
-            if (!exportDir.exists()) {
-                if (!exportDir.mkdirs()) {
-                    Log.e(TAG, "Failed to create export directory");
-                    return false;
-                }
+            if (!exportDir.exists() && !exportDir.mkdirs()) {
+                UIHelper.toastError(context, "Cannot create export folder");
+                return false;
             }
 
             File file = new File(exportDir, fileName.endsWith(".json") ? fileName : fileName + ".json");
+
+            if (file.exists()) {
+                UIHelper.toastInfo(context, "File already exists: " + file.getName());
+            }
+
             FileWriter writer = new FileWriter(file);
             writer.write(jsonContent);
             writer.close();
 
-            Log.d(TAG, "Script exported to: " + file.getAbsolutePath());
+            // Media scan
+            Intent scan = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            scan.setData(Uri.fromFile(file));
+            context.sendBroadcast(scan);
 
-            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            mediaScanIntent.setData(Uri.fromFile(file));
-            context.sendBroadcast(mediaScanIntent);
-
-            Toast.makeText(context, "Exported to Downloads/" + EXPORT_DIR + "/" + file.getName(),
-                    Toast.LENGTH_LONG).show();
+            UIHelper.toastSuccess(context, "Exported to Downloads/" + EXPORT_DIR);
             return true;
 
         } catch (Exception e) {
             Log.e(TAG, "Export failed: " + e.getMessage());
-            Toast.makeText(context, "Export failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            UIHelper.toastError(context, "Export failed: " + e.getMessage());
             return false;
         }
     }
 
     public static boolean shareScript(Context context, String jsonContent, String title) {
         try {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("application/json");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, jsonContent);
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
-            context.startActivity(Intent.createChooser(shareIntent, "Share Script"));
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/json");
+            share.putExtra(Intent.EXTRA_TEXT, jsonContent);
+            share.putExtra(Intent.EXTRA_SUBJECT, title);
+            context.startActivity(Intent.createChooser(share, "Share Script via"));
             return true;
-
         } catch (Exception e) {
-            Log.e(TAG, "Share failed: " + e.getMessage());
-            Toast.makeText(context, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            UIHelper.toastError(context, "Share failed");
             return false;
         }
     }
 
     public static boolean copyToClipboard(Context context, String jsonContent) {
         try {
-            ClipboardManager clipboard = (ClipboardManager)
-                    context.getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("MO MACRO Script", jsonContent);
-            clipboard.setPrimaryClip(clip);
-            Toast.makeText(context, "Script copied to clipboard", Toast.LENGTH_SHORT).show();
+            ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            cm.setPrimaryClip(ClipData.newPlainText("MO MACRO Script", jsonContent));
+            UIHelper.toastSuccess(context, "Copied to clipboard");
             return true;
-
         } catch (Exception e) {
-            Log.e(TAG, "Copy failed: " + e.getMessage());
+            UIHelper.toastError(context, "Copy failed");
             return false;
         }
     }
 
-    public static String compileScriptToJson(String name, String description,
-                                             List<Action> actions) {
+    public static String compileToJson(String name, String desc, List<Action> actions) {
         try {
             org.json.JSONObject root = new org.json.JSONObject();
-            root.put("name", name != null ? name : "MO MACRO Script");
-            root.put("description", description != null ? description :
-                    "Script exported on " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-                            java.util.Locale.US).format(new java.util.Date()));
+            root.put("name", name != null ? name : "Script");
+            root.put("description", desc != null ? desc : "");
             root.put("version", 1);
-
-            org.json.JSONArray actionsArray = new org.json.JSONArray();
-            for (Action action : actions) {
-                org.json.JSONObject actionObj = new org.json.JSONObject();
-                actionObj.put("type", action.getType());
-                actionObj.put("x", action.getX());
-                actionObj.put("y", action.getY());
-                actionObj.put("endX", action.getEndX());
-                actionObj.put("endY", action.getEndY());
-                actionObj.put("duration", action.getDuration());
-                actionObj.put("delay", action.getDelay());
-                actionObj.put("repeat", action.getRepeat());
-                actionsArray.put(actionObj);
+            org.json.JSONArray arr = new org.json.JSONArray();
+            for (Action a : actions) {
+                org.json.JSONObject obj = new org.json.JSONObject();
+                obj.put("type", a.getType());
+                obj.put("x", a.getX()); obj.put("y", a.getY());
+                obj.put("endX", a.getEndX()); obj.put("endY", a.getEndY());
+                obj.put("duration", a.getDuration()); obj.put("delay", a.getDelay());
+                obj.put("repeat", a.getRepeat());
+                arr.put(obj);
             }
-            root.put("actions", actionsArray);
-
+            root.put("actions", arr);
             return root.toString(4);
-
         } catch (Exception e) {
-            Log.e(TAG, "Compile failed: " + e.getMessage());
             return null;
         }
     }
 
-    public static List<String> listExportedScripts() {
-        List<String> scripts = new java.util.ArrayList<>();
-        File exportDir = new File(Environment.getExternalStoragePublicDirectory(
+    public static List<String> listExported() {
+        List<String> s = new ArrayList<>();
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR);
-        if (exportDir.exists() && exportDir.isDirectory()) {
-            File[] files = exportDir.listFiles((d, name) -> name.endsWith(".json"));
-            if (files != null) {
-                for (File file : files) {
-                    scripts.add(file.getName());
-                }
-            }
+        if (dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles((d, n) -> n.endsWith(".json"));
+            if (files != null) for (File f : files) s.add(f.getName());
         }
-        return scripts;
+        return s;
     }
 
-    public static boolean deleteExportedScript(String fileName) {
-        File exportDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR);
-        File file = new File(exportDir, fileName.endsWith(".json") ? fileName : fileName + ".json");
-        return file.exists() && file.delete();
-    }
-
-    public static boolean deleteAllExports() {
-        File exportDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR);
-        if (exportDir.exists() && exportDir.isDirectory()) {
-            File[] files = exportDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            return true;
-        }
-        return false;
+    public static boolean deleteExported(String name) {
+        File f = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR, name);
+        return f.exists() && f.delete();
     }
 }

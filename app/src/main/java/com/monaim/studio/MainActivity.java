@@ -14,20 +14,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.monaim.studio.overlay.FloatingWidgetService;
-import com.monaim.studio.service.MacroAccessibilityService;
 import com.monaim.studio.ui.SettingsActivity;
+import com.monaim.studio.ui.UIHelper;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnToggleOverlay;
-    private Button btnSettings;
-    private Button btnAccessibility;
-    private Button btnLoadScript;
-    private TextView tvStatusOverlay;
-    private TextView tvStatusAccessibility;
-    private TextView tvHintOverlay;
-    private TextView tvHintAccessibility;
+    private Button btnToggleOverlay, btnSettings, btnAccessibility, btnLoadScript;
+    private TextView tvStatusOverlay, tvStatusAccessibility, tvHintOverlay, tvHintAccessibility;
     private boolean overlayRunning = false;
 
     @Override
@@ -48,30 +42,28 @@ public class MainActivity extends AppCompatActivity {
 
         btnToggleOverlay.setOnClickListener(v -> {
             if (overlayRunning) {
-                stopFloatingService();
+                UIHelper.showConfirm(this, "Stop Overlay",
+                        "Are you sure you want to stop the floating widget?",
+                        "Stop", "Cancel", () -> {
+                            stopFloatingService();
+                            UIHelper.toastInfo(this, "Widget stopped");
+                        });
             } else {
                 tryStartOverlay();
             }
         });
 
-        btnSettings.setOnClickListener(v -> {
-            startActivity(new Intent(this, SettingsActivity.class));
-        });
+        btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
 
-        btnAccessibility.setOnClickListener(v -> {
-            openAccessibilitySettings();
-        });
+        btnAccessibility.setOnClickListener(v -> openAccessibilitySettings());
 
         btnLoadScript.setOnClickListener(v -> {
-            if (overlayRunning && isAccessibilityEnabled()) {
-                Toast.makeText(this, "Ready! Use floating widget to control macros.",
-                        Toast.LENGTH_LONG).show();
-            } else if (!overlayRunning) {
-                Toast.makeText(this, "Please start the overlay first.",
-                        Toast.LENGTH_SHORT).show();
+            if (!overlayRunning) {
+                UIHelper.toastInfo(this, "Please start the overlay first.");
+            } else if (!isAccessibilityEnabled()) {
+                UIHelper.toastInfo(this, "Please enable Accessibility Service first.");
             } else {
-                Toast.makeText(this, "Please enable Accessibility Service first.",
-                        Toast.LENGTH_SHORT).show();
+                UIHelper.toastSuccess(this, "Ready! Use the floating widget.");
             }
         });
     }
@@ -86,24 +78,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1001) {
-            // عاد من شاشة صلاحية التراكب - حاول التشغيل مباشرة
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                UIHelper.toastSuccess(this, "Permission granted! Starting widget...");
                 startFloatingService();
             } else {
-                Toast.makeText(this, "Overlay permission required to show floating widget",
-                        Toast.LENGTH_LONG).show();
+                UIHelper.toastError(this, "Overlay permission denied");
             }
         }
     }
 
     private void tryStartOverlay() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            // لا توجد صلاحية - اطلبها بدلاً من إغلاق التطبيق
-            tvHintOverlay.setText("ⓘ Overlay permission needed. Tap to grant.");
-            tvHintOverlay.setTextColor(0xFFFF9800);
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, 1001);
+            UIHelper.showConfirm(this, "Overlay Permission",
+                    "MO MACRO needs overlay permission to show the floating widget above games.",
+                    "Grant", "Cancel",
+                    () -> {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent, 1001);
+                    });
         } else {
             startFloatingService();
         }
@@ -118,22 +111,19 @@ public class MainActivity extends AppCompatActivity {
         }
         overlayRunning = true;
         updateAllStatuses();
-        Toast.makeText(this, "MO MACRO overlay started", Toast.LENGTH_SHORT).show();
+        UIHelper.toastSuccess(this, "Widget started");
     }
 
     private void stopFloatingService() {
-        Intent service = new Intent(this, FloatingWidgetService.class);
-        stopService(service);
+        stopService(new Intent(this, FloatingWidgetService.class));
         overlayRunning = false;
         updateAllStatuses();
     }
 
     private void openAccessibilitySettings() {
-        // يفتح إعدادات Accessibility مباشرة - لا يغلق التطبيق أبداً
         Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
         startActivity(intent);
-        Toast.makeText(this, "Find 'MO MACRO' in the list and turn it ON",
-                Toast.LENGTH_LONG).show();
+        UIHelper.toastLong(this, "Find 'MO MACRO' in the list and turn it ON");
     }
 
     private boolean isAccessibilityEnabled() {
@@ -158,16 +148,14 @@ public class MainActivity extends AppCompatActivity {
         if (overlayRunning) {
             tvStatusOverlay.setText("● Running");
             tvStatusOverlay.setTextColor(0xFF4CAF50);
-            btnToggleOverlay.setText("Stop Overlay");
-            btnToggleOverlay.setBackgroundColor(0xFFE94560);
-            tvHintOverlay.setText("✓ Overlay is active");
+            btnToggleOverlay.setText("Stop Widget");
+            tvHintOverlay.setText("✓ Widget is active");
             tvHintOverlay.setTextColor(0xFF4CAF50);
         } else {
             tvStatusOverlay.setText("● Stopped");
             tvStatusOverlay.setTextColor(0xFF888888);
-            btnToggleOverlay.setText("Start Overlay");
-            btnToggleOverlay.setBackgroundColor(0xFF4CAF50);
-            tvHintOverlay.setText("Start overlay to show floating widget");
+            btnToggleOverlay.setText("Start Widget");
+            tvHintOverlay.setText("Tap to start floating widget");
             tvHintOverlay.setTextColor(0xFF888888);
         }
     }
@@ -176,16 +164,14 @@ public class MainActivity extends AppCompatActivity {
         if (isAccessibilityEnabled()) {
             tvStatusAccessibility.setText("● Enabled");
             tvStatusAccessibility.setTextColor(0xFF4CAF50);
-            btnAccessibility.setText("Accessibility ✓");
-            btnAccessibility.setBackgroundColor(0xFF4CAF50);
-            tvHintAccessibility.setText("✓ Ready to perform taps and swipes");
+            btnAccessibility.setText("✓ Enabled");
+            tvHintAccessibility.setText("Ready to perform actions");
             tvHintAccessibility.setTextColor(0xFF4CAF50);
         } else {
             tvStatusAccessibility.setText("● Not Enabled");
             tvStatusAccessibility.setTextColor(0xFFFF9800);
-            btnAccessibility.setText("Enable Accessibility");
-            btnAccessibility.setBackgroundColor(0xFFFF9800);
-            tvHintAccessibility.setText("Required for macro to work. Tap to enable.");
+            btnAccessibility.setText("Enable Service");
+            tvHintAccessibility.setText("Required. Tap to open settings.");
             tvHintAccessibility.setTextColor(0xFFFF9800);
         }
     }

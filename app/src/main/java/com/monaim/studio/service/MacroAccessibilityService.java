@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,9 +17,10 @@ public class MacroAccessibilityService extends AccessibilityService {
     private static MacroAccessibilityService instance;
     private Handler handler;
     private boolean isHolding = false;
-    private float holdStartX = 540f, holdStartY = 1200f, holdEndX = 540f, holdEndY = 600f;
-    private long holdDuration = 100L;
+    private float hx1, hy1, hx2, hy2;
+    private long hdur;
     private BroadcastReceiver holdReceiver;
+    private SharedPreferences prefs;
 
     public static MacroAccessibilityService getInstance() { return instance; }
 
@@ -33,7 +35,17 @@ public class MacroAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         instance = this;
         handler = new Handler(Looper.getMainLooper());
+        prefs = getSharedPreferences("mo_macro_widget", MODE_PRIVATE);
+        loadHoldCoords();
         registerHoldReceiver();
+    }
+
+    private void loadHoldCoords() {
+        hx1 = prefs.getInt("hold_x1", 540);
+        hy1 = prefs.getInt("hold_y1", 1200);
+        hx2 = prefs.getInt("hold_x2", 540);
+        hy2 = prefs.getInt("hold_y2", 600);
+        hdur = prefs.getLong("hold_dur", 100L);
     }
 
     @Override
@@ -47,26 +59,19 @@ public class MacroAccessibilityService extends AccessibilityService {
     private void registerHoldReceiver() {
         holdReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                if ("com.monaim.studio.HOLD_START".equals(intent.getAction())) {
+            public void onReceive(Context c, Intent i) {
+                if ("com.monaim.studio.HOLD_START".equals(i.getAction())) {
+                    loadHoldCoords();
                     startHoldSwipe();
-                } else if ("com.monaim.studio.HOLD_STOP".equals(intent.getAction())) {
+                } else if ("com.monaim.studio.HOLD_STOP".equals(i.getAction())) {
                     stopHold();
                 }
             }
         };
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("com.monaim.studio.HOLD_START");
-        filter.addAction("com.monaim.studio.HOLD_STOP");
-        registerReceiver(holdReceiver, filter);
-    }
-
-    public void setHoldCoordinates(float x1, float y1, float x2, float y2, long duration) {
-        this.holdStartX = x1;
-        this.holdStartY = y1;
-        this.holdEndX = x2;
-        this.holdEndY = y2;
-        this.holdDuration = Math.max(duration, 10L);
+        IntentFilter f = new IntentFilter();
+        f.addAction("com.monaim.studio.HOLD_START");
+        f.addAction("com.monaim.studio.HOLD_STOP");
+        registerReceiver(holdReceiver, f);
     }
 
     private void startHoldSwipe() {
@@ -77,55 +82,22 @@ public class MacroAccessibilityService extends AccessibilityService {
 
     private void executeHoldLoop() {
         if (!isHolding) return;
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-        Path path = new Path();
-        path.moveTo(holdStartX, holdStartY);
-        path.lineTo(holdEndX, holdEndY);
-        builder.addStroke(new GestureDescription.StrokeDescription(path, 0, holdDuration));
-        dispatchGesture(builder.build(), new GestureResultCallback() {
-            @Override
-            public void onCompleted(GestureDescription gd) {
-                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 10);
-            }
-            @Override
-            public void onCancelled(GestureDescription gd) {
-                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 10);
-            }
-        }, null);
-    }
-
-    private void stopHold() {
-        isHolding = false;
-    }
-
-    public void performTap(float x, float y, long delay, Runnable callback) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-        Path path = new Path();
-        path.moveTo(x, y);
-        builder.addStroke(new GestureDescription.StrokeDescription(path, 0, 1));
-        dispatchGesture(builder.build(), new GestureResultCallback() {
+        GestureDescription.Builder b = new GestureDescription.Builder();
+        Path p = new Path();
+        p.moveTo(hx1, hy1);
+        p.lineTo(hx2, hy2);
+        b.addStroke(new GestureDescription.StrokeDescription(p, 0, hdur));
+        dispatchGesture(b.build(), new GestureResultCallback() {
             @Override public void onCompleted(GestureDescription gd) {
-                if (callback != null) handler.postDelayed(callback, delay);
+                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
             }
             @Override public void onCancelled(GestureDescription gd) {
-                if (callback != null) handler.postDelayed(callback, delay);
+                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
             }
         }, null);
     }
 
-    public void performSwipe(float x1, float y1, float x2, float y2, long duration, long delay, Runnable callback) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-        Path path = new Path();
-        path.moveTo(x1, y1);
-        path.lineTo(x2, y2);
-        builder.addStroke(new GestureDescription.StrokeDescription(path, 0, duration));
-        dispatchGesture(builder.build(), new GestureResultCallback() {
-            @Override public void onCompleted(GestureDescription gd) {
-                if (callback != null) handler.postDelayed(callback, delay);
-            }
-            @Override public void onCancelled(GestureDescription gd) {
-                if (callback != null) handler.postDelayed(callback, delay);
-            }
-        }, null);
-    }
+    private void stopHold() { isHolding = false; }
+
+    public boolean isServiceRunning() { return instance != null; }
 }
