@@ -20,11 +20,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.monaim.studio.R;
 import com.monaim.studio.macro.JsonScriptLoader;
 
-import java.io.File;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -93,39 +94,27 @@ public class SettingsActivity extends AppCompatActivity {
         // === WIDGET SETTINGS ===
         rootLayout.addView(createSectionHeader("Widget Settings"));
 
-        // Opacity
         rootLayout.addView(createLabel("Widget Opacity"));
         sbOpacity = createSeekBar(10, 100, prefs.getInt(KEY_OPACITY, 90));
         tvOpacity = createValueLabel(sbOpacity.getProgress() + "%");
         rootLayout.addView(createSeekBarRow(sbOpacity, tvOpacity));
-        sbOpacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar s, int p, boolean u) { tvOpacity.setText(p + "%"); }
-            public void onStartTrackingTouch(SeekBar s) {}
-            public void onStopTrackingTouch(SeekBar s) {}
-        });
+        sbOpacity.setOnSeekBarChangeListener(seekBarTextUpdater(tvOpacity, "%"));
 
-        // Size
         rootLayout.addView(createLabel("Widget Size"));
         sbSize = createSeekBar(20, 100, prefs.getInt(KEY_SIZE, 48));
         tvSize = createValueLabel(sbSize.getProgress() + "dp");
         rootLayout.addView(createSeekBarRow(sbSize, tvSize));
-        sbSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar s, int p, boolean u) { tvSize.setText(p + "dp"); }
-            public void onStartTrackingTouch(SeekBar s) {}
-            public void onStopTrackingTouch(SeekBar s) {}
-        });
+        sbSize.setOnSeekBarChangeListener(seekBarTextUpdater(tvSize, "dp"));
 
         // === ACTION DEFAULTS ===
         rootLayout.addView(createSectionHeader("Action Defaults"));
 
-        // Default Delay
         rootLayout.addView(createLabel("Default Delay (ms)"));
         sbDefaultDelay = createSeekBar(1, 2000, prefs.getInt(KEY_DEFAULT_DELAY, 100));
         tvDefaultDelay = createValueLabel(sbDefaultDelay.getProgress() + "ms");
         rootLayout.addView(createSeekBarRow(sbDefaultDelay, tvDefaultDelay));
         sbDefaultDelay.setOnSeekBarChangeListener(seekBarTextUpdater(tvDefaultDelay, "ms"));
 
-        // Swipe Duration
         rootLayout.addView(createLabel("Default Swipe Duration (ms)"));
         sbSwipeDuration = createSeekBar(10, 3000, prefs.getInt(KEY_SWIPE_DURATION, 200));
         tvSwipeDuration = createValueLabel(sbSwipeDuration.getProgress() + "ms");
@@ -135,14 +124,12 @@ public class SettingsActivity extends AppCompatActivity {
         // === EXECUTION SETTINGS ===
         rootLayout.addView(createSectionHeader("Execution Settings"));
 
-        // Execution Speed Multiplier
         rootLayout.addView(createLabel("Speed Multiplier"));
         sbExecutionSpeed = createSeekBar(10, 500, prefs.getInt(KEY_EXECUTION_SPEED, 100));
         tvExecutionSpeed = createValueLabel(sbExecutionSpeed.getProgress() + "%");
         rootLayout.addView(createSeekBarRow(sbExecutionSpeed, tvExecutionSpeed));
         sbExecutionSpeed.setOnSeekBarChangeListener(seekBarTextUpdater(tvExecutionSpeed, "%"));
 
-        // Loop Count
         rootLayout.addView(createLabel("Loop Count (0 = infinite)"));
         sbLoopCount = createSeekBar(0, 100, prefs.getInt(KEY_LOOP_COUNT, 1));
         tvLoopCount = createValueLabel(sbLoopCount.getProgress() == 0 ? "∞" : String.valueOf(sbLoopCount.getProgress()));
@@ -155,7 +142,6 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar s) {}
         });
 
-        // Start Delay
         rootLayout.addView(createLabel("Start Delay (seconds)"));
         sbStartDelay = createSeekBar(0, 30, prefs.getInt(KEY_START_DELAY, 3));
         tvStartDelay = createValueLabel(sbStartDelay.getProgress() + "s");
@@ -203,11 +189,11 @@ public class SettingsActivity extends AppCompatActivity {
         // === SAFETY ===
         rootLayout.addView(createSectionHeader("Safety"));
 
-        cbEdgeProtection = createCheckBox("Edge Protection (prevent out-of-bounds)",
+        cbEdgeProtection = createCheckBox("Edge Protection",
                 prefs.getBoolean(KEY_EDGE_PROTECTION, true));
         rootLayout.addView(cbEdgeProtection);
 
-        cbSafeMode = createCheckBox("Safe Mode (add delay between actions)",
+        cbSafeMode = createCheckBox("Safe Mode",
                 prefs.getBoolean(KEY_SAFE_MODE, false));
         rootLayout.addView(cbSafeMode);
 
@@ -218,7 +204,7 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.getBoolean(KEY_VIBRATE_ON_ACTION, false));
         rootLayout.addView(cbVibrate);
 
-        cbShowCoordinates = createCheckBox("Show Coordinates on Touch",
+        cbShowCoordinates = createCheckBox("Show Coordinates",
                 prefs.getBoolean(KEY_SHOW_COORDINATES, true));
         rootLayout.addView(cbShowCoordinates);
 
@@ -249,7 +235,6 @@ public class SettingsActivity extends AppCompatActivity {
         btnImportSettings.setOnClickListener(v -> toggleImportPanel());
         rootLayout.addView(btnImportSettings);
 
-        // Import Panel
         llImportPanel = new LinearLayout(this);
         llImportPanel.setOrientation(LinearLayout.VERTICAL);
         llImportPanel.setVisibility(View.GONE);
@@ -448,19 +433,19 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putBoolean(KEY_LOG_ACTIONS, cbLogActions.isChecked());
         editor.putString(KEY_INDICATOR_COLOR, colorNames[spIndicatorColor.getSelectedItemPosition()]);
         editor.apply();
-        Toast.makeText(this, "Settings saved successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();
     }
 
     private void resetSettings() {
-        sbOpacity.setProgress(90 - ((int[]) sbOpacity.getTag())[0]);
-        sbSize.setProgress(48 - ((int[]) sbSize.getTag())[0]);
-        sbDefaultDelay.setProgress(100 - ((int[]) sbDefaultDelay.getTag())[0]);
-        sbSwipeDuration.setProgress(200 - ((int[]) sbSwipeDuration.getTag())[0]);
-        sbExecutionSpeed.setProgress(100 - ((int[]) sbExecutionSpeed.getTag())[0]);
-        sbLoopCount.setProgress(1 - ((int[]) sbLoopCount.getTag())[0]);
-        sbStartDelay.setProgress(3 - ((int[]) sbStartDelay.getTag())[0]);
-        sbIndicatorSize.setProgress(20 - ((int[]) sbIndicatorSize.getTag())[0]);
-        sbRandomRange.setProgress(5 - ((int[]) sbRandomRange.getTag())[0]);
+        sbOpacity.setProgress(80);
+        sbSize.setProgress(28);
+        sbDefaultDelay.setProgress(99);
+        sbSwipeDuration.setProgress(190);
+        sbExecutionSpeed.setProgress(90);
+        sbLoopCount.setProgress(1);
+        sbStartDelay.setProgress(3);
+        sbIndicatorSize.setProgress(15);
+        sbRandomRange.setProgress(4);
         cbVibrate.setChecked(false);
         cbShowCoordinates.setChecked(true);
         cbAutoSave.setChecked(true);
@@ -476,7 +461,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private String exportSettings() {
         try {
-            org.json.JSONObject json = new org.json.JSONObject();
+            JSONObject json = new JSONObject();
             json.put(KEY_OPACITY, getSeekBarValue(sbOpacity));
             json.put(KEY_SIZE, getSeekBarValue(sbSize));
             json.put(KEY_DEFAULT_DELAY, getSeekBarValue(sbDefaultDelay));
@@ -520,40 +505,46 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
         try {
-            org.json.JSONObject json = new org.json.JSONObject(jsonString);
+            JSONObject json = new JSONObject(jsonString);
 
-            for (String key : json.keySet()) {
+            Iterator<String> keys = json.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
                 Object value = json.get(key);
-                switch (key) {
-                    case KEY_OPACITY: sbOpacity.setProgress(((Number) value).intValue() - ((int[]) sbOpacity.getTag())[0]); break;
-                    case KEY_SIZE: sbSize.setProgress(((Number) value).intValue() - ((int[]) sbSize.getTag())[0]); break;
-                    case KEY_DEFAULT_DELAY: sbDefaultDelay.setProgress(((Number) value).intValue() - ((int[]) sbDefaultDelay.getTag())[0]); break;
-                    case KEY_SWIPE_DURATION: sbSwipeDuration.setProgress(((Number) value).intValue() - ((int[]) sbSwipeDuration.getTag())[0]); break;
-                    case KEY_EXECUTION_SPEED: sbExecutionSpeed.setProgress(((Number) value).intValue() - ((int[]) sbExecutionSpeed.getTag())[0]); break;
-                    case KEY_LOOP_COUNT: sbLoopCount.setProgress(((Number) value).intValue() - ((int[]) sbLoopCount.getTag())[0]); break;
-                    case KEY_START_DELAY: sbStartDelay.setProgress(((Number) value).intValue() - ((int[]) sbStartDelay.getTag())[0]); break;
-                    case KEY_INDICATOR_SIZE: sbIndicatorSize.setProgress(((Number) value).intValue() - ((int[]) sbIndicatorSize.getTag())[0]); break;
-                    case KEY_RANDOM_RANGE: sbRandomRange.setProgress(((Number) value).intValue() - ((int[]) sbRandomRange.getTag())[0]); break;
-                    case KEY_VIBRATE_ON_ACTION: cbVibrate.setChecked((Boolean) value); break;
-                    case KEY_SHOW_COORDINATES: cbShowCoordinates.setChecked((Boolean) value); break;
-                    case KEY_AUTO_SAVE: cbAutoSave.setChecked((Boolean) value); break;
-                    case KEY_TOUCH_INDICATOR: cbTouchIndicator.setChecked((Boolean) value); break;
-                    case KEY_RANDOMIZE_DELAY: cbRandomizeDelay.setChecked((Boolean) value); break;
-                    case KEY_RANDOMIZE_POSITION: cbRandomizePosition.setChecked((Boolean) value); break;
-                    case KEY_EDGE_PROTECTION: cbEdgeProtection.setChecked((Boolean) value); break;
-                    case KEY_SAFE_MODE: cbSafeMode.setChecked((Boolean) value); break;
-                    case KEY_LOG_ACTIONS: cbLogActions.setChecked((Boolean) value); break;
-                    case KEY_INDICATOR_COLOR:
-                        for (int i = 0; i < colorNames.length; i++) {
-                            if (colorNames[i].equals(value.toString())) {
-                                spIndicatorColor.setSelection(i);
-                                break;
+                try {
+                    switch (key) {
+                        case KEY_OPACITY: sbOpacity.setProgress(((Number) value).intValue() - 10); break;
+                        case KEY_SIZE: sbSize.setProgress(((Number) value).intValue() - 20); break;
+                        case KEY_DEFAULT_DELAY: sbDefaultDelay.setProgress(((Number) value).intValue() - 1); break;
+                        case KEY_SWIPE_DURATION: sbSwipeDuration.setProgress(((Number) value).intValue() - 10); break;
+                        case KEY_EXECUTION_SPEED: sbExecutionSpeed.setProgress(((Number) value).intValue() - 10); break;
+                        case KEY_LOOP_COUNT: sbLoopCount.setProgress(((Number) value).intValue()); break;
+                        case KEY_START_DELAY: sbStartDelay.setProgress(((Number) value).intValue()); break;
+                        case KEY_INDICATOR_SIZE: sbIndicatorSize.setProgress(((Number) value).intValue() - 5); break;
+                        case KEY_RANDOM_RANGE: sbRandomRange.setProgress(((Number) value).intValue() - 1); break;
+                        case KEY_VIBRATE_ON_ACTION: cbVibrate.setChecked((Boolean) value); break;
+                        case KEY_SHOW_COORDINATES: cbShowCoordinates.setChecked((Boolean) value); break;
+                        case KEY_AUTO_SAVE: cbAutoSave.setChecked((Boolean) value); break;
+                        case KEY_TOUCH_INDICATOR: cbTouchIndicator.setChecked((Boolean) value); break;
+                        case KEY_RANDOMIZE_DELAY: cbRandomizeDelay.setChecked((Boolean) value); break;
+                        case KEY_RANDOMIZE_POSITION: cbRandomizePosition.setChecked((Boolean) value); break;
+                        case KEY_EDGE_PROTECTION: cbEdgeProtection.setChecked((Boolean) value); break;
+                        case KEY_SAFE_MODE: cbSafeMode.setChecked((Boolean) value); break;
+                        case KEY_LOG_ACTIONS: cbLogActions.setChecked((Boolean) value); break;
+                        case KEY_INDICATOR_COLOR:
+                            for (int i = 0; i < colorNames.length; i++) {
+                                if (colorNames[i].equals(value.toString())) {
+                                    spIndicatorColor.setSelection(i);
+                                    break;
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
+                } catch (Exception e) {
+                    // skip invalid values
                 }
             }
-            Toast.makeText(this, "Settings imported successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Settings imported", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, "Invalid JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -562,7 +553,7 @@ public class SettingsActivity extends AppCompatActivity {
     private void manageScripts() {
         List<String> scripts = JsonScriptLoader.listSavedScripts(this);
         if (scripts.isEmpty()) {
-            Toast.makeText(this, "No scripts found. Create one first.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No scripts found", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -572,26 +563,18 @@ public class SettingsActivity extends AppCompatActivity {
         }
         sb.append("\n").append(scripts.size()).append(" script(s) total.");
 
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("Script Manager");
-        builder.setMessage(sb.toString());
-        builder.setPositiveButton("OK", null);
-
-        if (!scripts.isEmpty()) {
-            builder.setNeutralButton("Delete All", (dialog, which) -> deleteAllScripts());
-        }
-
-        builder.show();
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Script Manager")
+                .setMessage(sb.toString())
+                .setPositiveButton("OK", null)
+                .setNeutralButton("Delete All", (d, w) -> deleteAllScripts())
+                .show();
     }
 
     private void createSampleScript() {
         String sampleJson = JsonScriptLoader.generateSampleScript();
         boolean saved = JsonScriptLoader.importScriptFromString(this, sampleJson, "sample_script.json");
-        if (saved) {
-            Toast.makeText(this, "Sample script created: sample_script.json", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Failed to create sample script", Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(this, saved ? "Sample script created" : "Failed", Toast.LENGTH_SHORT).show();
     }
 
     private void deleteAllScripts() {
