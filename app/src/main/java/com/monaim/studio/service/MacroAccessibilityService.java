@@ -100,4 +100,46 @@ public class MacroAccessibilityService extends AccessibilityService {
     private void stopHold() { isHolding = false; }
 
     public boolean isServiceRunning() { return instance != null; }
+
+    // ========== PERFORM TAP ==========
+    public void performTap(float x, float y, long delayAfter, Runnable callback) {
+        try {
+            GestureDescription.Builder b = new GestureDescription.Builder();
+            Path p = new Path();
+            p.moveTo(x, y);
+            b.addStroke(new GestureDescription.StrokeDescription(p, 0, 1));
+            dispatchGesture(b.build(), new GestureResultCallback() {
+                @Override public void onCompleted(GestureDescription gd) {
+                    if (callback != null) handler.postDelayed(callback, delayAfter);
+                }
+                @Override public void onCancelled(GestureDescription gd) {
+                    if (callback != null) handler.postDelayed(callback, delayAfter);
+                }
+            }, null);
+        } catch (Exception e) {
+            if (callback != null) handler.postDelayed(callback, delayAfter);
+        }
+    }
+
+    // ========== PERFORM SWIPE ==========
+    public void performSwipe(float x1, float y1, float x2, float y2,
+                             long duration, long delayAfter, Runnable callback) {
+        try {
+            GestureDescription.Builder b = new GestureDescription.Builder();
+            Path p = new Path();
+            p.moveTo(x1, y1);
+            p.lineTo(x2, y2);
+            b.addStroke(new GestureDescription.StrokeDescription(p, 0, duration));
+            dispatchGesture(b.build(), new GestureResultCallback() {
+                @Override public void onCompleted(GestureDescription gd) {
+                    if (callback != null) handler.postDelayed(callback, delayAfter);
+                }
+                @Override public void onCancelled(GestureDescription gd) {
+                    if (callback != null) handler.postDelayed(callback, delayAfter);
+                }
+            }, null);
+        } catch (Exception e) {
+            if (callback != null) handler.postDelayed(callback, delayAfter);
+        }
+    }
 }
