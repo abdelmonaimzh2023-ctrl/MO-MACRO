@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,10 +16,9 @@ public class MacroAccessibilityService extends AccessibilityService {
     private static MacroAccessibilityService instance;
     private Handler handler;
     private boolean isHolding = false;
-    private float hx1, hy1, hx2, hy2;
-    private long hdur;
+    private float hx1 = 540, hy1 = 1200, hx2 = 540, hy2 = 600;
+    private long hdur = 100;
     private BroadcastReceiver holdReceiver;
-    private SharedPreferences prefs;
 
     public static MacroAccessibilityService getInstance() { return instance; }
 
@@ -35,17 +33,7 @@ public class MacroAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         instance = this;
         handler = new Handler(Looper.getMainLooper());
-        prefs = getSharedPreferences("mo_macro_widget", MODE_PRIVATE);
-        loadHoldCoords();
         registerHoldReceiver();
-    }
-
-    private void loadHoldCoords() {
-        hx1 = prefs.getInt("hold_x1", 540);
-        hy1 = prefs.getInt("hold_y1", 1200);
-        hx2 = prefs.getInt("hold_x2", 540);
-        hy2 = prefs.getInt("hold_y2", 600);
-        hdur = prefs.getLong("hold_dur", 100L);
     }
 
     @Override
@@ -60,12 +48,18 @@ public class MacroAccessibilityService extends AccessibilityService {
         holdReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent i) {
-                if ("com.monaim.studio.HOLD_START".equals(i.getAction())) {
-                    loadHoldCoords();
-                    startHoldSwipe();
-                } else if ("com.monaim.studio.HOLD_STOP".equals(i.getAction())) {
-                    stopHold();
-                }
+                try {
+                    if ("com.monaim.studio.HOLD_START".equals(i.getAction())) {
+                        hx1 = i.getFloatExtra("x1", 540);
+                        hy1 = i.getFloatExtra("y1", 1200);
+                        hx2 = i.getFloatExtra("x2", 540);
+                        hy2 = i.getFloatExtra("y2", 600);
+                        hdur = i.getLongExtra("duration", 100);
+                        startHoldSwipe();
+                    } else if ("com.monaim.studio.HOLD_STOP".equals(i.getAction())) {
+                        stopHold();
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
             }
         };
         IntentFilter f = new IntentFilter();
@@ -74,7 +68,7 @@ public class MacroAccessibilityService extends AccessibilityService {
         registerReceiver(holdReceiver, f);
     }
 
-    private void startHoldSwipe() {
+    private synchronized void startHoldSwipe() {
         if (isHolding) return;
         isHolding = true;
         executeHoldLoop();
@@ -82,22 +76,28 @@ public class MacroAccessibilityService extends AccessibilityService {
 
     private void executeHoldLoop() {
         if (!isHolding) return;
-        GestureDescription.Builder b = new GestureDescription.Builder();
-        Path p = new Path();
-        p.moveTo(hx1, hy1);
-        p.lineTo(hx2, hy2);
-        b.addStroke(new GestureDescription.StrokeDescription(p, 0, hdur));
-        dispatchGesture(b.build(), new GestureResultCallback() {
-            @Override public void onCompleted(GestureDescription gd) {
-                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
-            }
-            @Override public void onCancelled(GestureDescription gd) {
-                if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
-            }
-        }, null);
+        try {
+            GestureDescription.Builder b = new GestureDescription.Builder();
+            Path p = new Path();
+            p.moveTo(hx1, hy1);
+            p.lineTo(hx2, hy2);
+            b.addStroke(new GestureDescription.StrokeDescription(p, 0, hdur));
+            dispatchGesture(b.build(), new GestureResultCallback() {
+                @Override public void onCompleted(GestureDescription gd) {
+                    if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
+                }
+                @Override public void onCancelled(GestureDescription gd) {
+                    if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 5);
+                }
+            }, null);
+        } catch (Exception e) {
+            if (isHolding) handler.postDelayed(() -> executeHoldLoop(), 10);
+        }
     }
 
-    private void stopHold() { isHolding = false; }
+    private synchronized void stopHold() {
+        isHolding = false;
+    }
 
     public boolean isServiceRunning() { return instance != null; }
 
