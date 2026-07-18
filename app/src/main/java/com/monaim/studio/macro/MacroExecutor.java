@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.monaim.studio.service.MacroAccessibilityService;
 
@@ -16,216 +15,127 @@ public class MacroExecutor {
     private static final String TAG = "MacroExecutor";
     private static MacroExecutor instance;
     private Context context;
-    private Handler mainHandler;
+    private Handler handler;
     private boolean isExecuting = false;
     private boolean isPaused = false;
-
-    private List<MacroAccessibilityService.MacroAction> actionQueue;
     private int currentIndex = 0;
-
-    private OnMacroStateListener stateListener;
+    private List<Action> actionList;
+    private OnMacroStateListener listener;
 
     public interface OnMacroStateListener {
-        void onMacroStarted();
-        void onMacroPaused();
-        void onMacroResumed();
-        void onMacroStopped();
-        void onMacroError(String error);
+        void onStarted();
+        void onPaused();
+        void onResumed();
+        void onStopped();
+        void onError(String msg);
     }
 
-    private MacroExecutor(Context context) {
-        this.context = context.getApplicationContext();
-        this.mainHandler = new Handler(Looper.getMainLooper());
-        this.actionQueue = new ArrayList<>();
+    private MacroExecutor(Context ctx) {
+        this.context = ctx.getApplicationContext();
+        this.handler = new Handler(Looper.getMainLooper());
+        this.actionList = new ArrayList<>();
     }
 
-    public static synchronized MacroExecutor getInstance(Context context) {
-        if (instance == null) {
-            instance = new MacroExecutor(context);
-        }
+    public static synchronized MacroExecutor getInstance(Context ctx) {
+        if (instance == null) instance = new MacroExecutor(ctx);
         return instance;
     }
 
-    public void setStateListener(OnMacroStateListener listener) {
-        this.stateListener = listener;
-    }
+    public void setListener(OnMacroStateListener l) { this.listener = l; }
 
-    public boolean isExecuting() {
-        return isExecuting;
-    }
+    public boolean isRunning() { return isExecuting; }
+    public boolean isPaused() { return isPaused; }
 
-    public boolean isPaused() {
-        return isPaused;
-    }
-
-    public void loadAndExecute(Context ctx, String scriptFileName) {
-        JsonScriptLoader.ScriptData script = JsonScriptLoader.loadScript(ctx, scriptFileName);
-        if (script == null) {
-            logError("Failed to load script: " + scriptFileName);
-            return;
-        }
-        executeScript(script);
-    }
-
-    public void executeScript(JsonScriptLoader.ScriptData script) {
+    public void loadAndExecute(Context ctx, String fileName) {
+        JsonScriptLoader.ScriptData script = JsonScriptLoader.loadScript(ctx, fileName);
         if (script == null || script.getActions().isEmpty()) {
-            logError("Script is empty or null");
+            error("Failed to load script: " + fileName);
             return;
         }
+        execute(script.getActions());
+    }
 
-        if (!MacroAccessibilityService.getInstance().isServiceRunning()) {
-            logError("Accessibility Service is not running");
-            return;
-        }
+    public void execute(List<Action> actions) {
+        if (actions == null || actions.isEmpty()) { error("No actions to execute"); return; }
+        if (MacroAccessibilityService.getInstance() == null) { error("Service not running"); return; }
 
-        actionQueue.clear();
+        stop();
+        actionList = new ArrayList<>(actions);
         currentIndex = 0;
-
-        for (Action action : script.getActions()) {
-            MacroAccessibilityService.MacroAction macroAction = convertAction(action);
-            if (macroAction != null) {
-                actionQueue.add(macroAction);
-            }
-        }
-
         isExecuting = true;
         isPaused = false;
 
-        if (stateListener != null) {
-            stateListener.onMacroStarted();
-        }
-
-        MacroAccessibilityService.getInstance().startMacro(actionQueue);
+        if (listener != null) listener.onStarted();
+        runNext();
     }
 
-    public void executeJsonString(Context ctx, String jsonString) {
-        if (!JsonScriptLoader.validateScriptJson(jsonString)) {
-            logError("Invalid JSON script");
-            return;
-        }
-        try {
-            JsonScriptLoader.ScriptData script = JsonScriptLoader.loadScriptFromAssets(ctx, jsonString);
-            if (script == null) {
-                JsonScriptLoader.importScriptFromString(ctx, jsonString, "temp_script.json");
-                script = JsonScriptLoader.loadScript(ctx, "temp_script.json");
-            }
-            if (script != null) {
-                executeScript(script);
-            }
-        } catch (Exception e) {
-            logError("Error parsing JSON: " + e.getMessage());
-        }
-    }
-
-    public void pauseExecution() {
+    public void pause() {
         if (!isExecuting || isPaused) return;
-
         isPaused = true;
-        MacroAccessibilityService.getInstance().pauseMacro();
-
-        if (stateListener != null) {
-            stateListener.onMacroPaused();
-        }
+        if (listener != null) listener.onPaused();
     }
 
-    public void resumeExecution() {
+    public void resume() {
         if (!isExecuting || !isPaused) return;
-
         isPaused = false;
-        MacroAccessibilityService.getInstance().resumeMacro();
-
-        if (stateListener != null) {
-            stateListener.onMacroResumed();
-        }
-    }
-
-    public void stopExecution() {
-        if (!isExecuting) return;
-
-        isExecuting = false;
-        isPaused = false;
-        actionQueue.clear();
-        currentIndex = 0;
-
-        if (MacroAccessibilityService.getInstance() != null) {
-            MacroAccessibilityService.getInstance().stopMacro();
-        }
-
-        if (stateListener != null) {
-            stateListener.onMacroStopped();
-        }
+        if (listener != null) listener.onResumed();
+        runNext();
     }
 
     public void togglePauseResume() {
-        if (isPaused) {
-            resumeExecution();
-        } else {
-            pauseExecution();
-        }
+        if (isPaused) resume(); else pause();
     }
 
-    private MacroAccessibilityService.MacroAction convertAction(Action action) {
-        if (action == null || action.getType() == null) return null;
+    public void stop() {
+        isExecuting = false;
+        isPaused = false;
+        actionList.clear();
+        currentIndex = 0;
+        handler.removeCallbacksAndMessages(null);
+        if (listener != null) listener.onStopped();
+    }
 
-        switch (action.getType().toLowerCase()) {
+    private void runNext() {
+        if (!isExecuting || isPaused) return;
+        if (currentIndex >= actionList.size()) { stop(); return; }
+
+        Action action = actionList.get(currentIndex);
+        currentIndex++;
+
+        long delay = action.getDelay() > 0 ? action.getDelay() : 50;
+
+        switch (action.getType() != null ? action.getType() : "delay") {
             case "tap":
-                return MacroAccessibilityService.MacroAction.tap(
-                        action.getX(), action.getY(), action.getDelay());
+                MacroAccessibilityService.getInstance().performTap(
+                        action.getX(), action.getY(), delay, this::runNext);
+                break;
 
             case "swipe":
-                return MacroAccessibilityService.MacroAction.swipe(
+                MacroAccessibilityService.getInstance().performSwipe(
                         action.getX(), action.getY(),
                         action.getEndX(), action.getEndY(),
-                        action.getDuration(), action.getDelay());
-
-            case "delay":
-                return MacroAccessibilityService.MacroAction.delay(action.getDelay());
+                        action.getDuration() > 0 ? action.getDuration() : 100,
+                        delay, this::runNext);
+                break;
 
             case "repeat":
-                return MacroAccessibilityService.MacroAction.repeat(
-                        action.getRepeat(), currentIndex);
+                if (action.getRepeat() > 1) {
+                    action.setRepeat(action.getRepeat() - 1);
+                    currentIndex = 0;
+                    handler.postDelayed(this::runNext, delay);
+                } else {
+                    handler.postDelayed(this::runNext, delay);
+                }
+                break;
 
             default:
-                Log.w(TAG, "Unknown action type: " + action.getType());
-                return null;
+                handler.postDelayed(this::runNext, delay);
+                break;
         }
     }
 
-    private void logError(String message) {
-        Log.e(TAG, message);
-        mainHandler.post(() -> {
-            if (stateListener != null) {
-                stateListener.onMacroError(message);
-            }
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    public static List<Action> generateSampleActions() {
-        List<Action> actions = new ArrayList<>();
-
-        Action tap = new Action();
-        tap.setType("tap");
-        tap.setX(540);
-        tap.setY(960);
-        tap.setDelay(100);
-        actions.add(tap);
-
-        Action delay = new Action();
-        delay.setType("delay");
-        delay.setDelay(500);
-        actions.add(delay);
-
-        Action swipe = new Action();
-        swipe.setType("swipe");
-        swipe.setX(540);
-        swipe.setY(1200);
-        swipe.setEndX(540);
-        swipe.setEndY(600);
-        swipe.setDuration(200);
-        swipe.setDelay(50);
-        actions.add(swipe);
-
-        return actions;
+    private void error(String msg) {
+        Log.e(TAG, msg);
+        if (listener != null) listener.onError(msg);
     }
 }

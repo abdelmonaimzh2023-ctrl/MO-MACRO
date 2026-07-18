@@ -6,7 +6,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import com.monaim.studio.ui.UIHelper;
@@ -48,7 +47,6 @@ public class ScriptExporter {
             writer.write(jsonContent);
             writer.close();
 
-            // Media scan
             Intent scan = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             scan.setData(Uri.fromFile(file));
             context.sendBroadcast(scan);
@@ -124,8 +122,9 @@ public class ScriptExporter {
     }
 
     public static boolean deleteExported(String name) {
-        File f = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR, name);
-        return f.exists() && f.delete();
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), EXPORT_DIR);
+        File file = new File(dir, name.endsWith(".json") ? name : name + ".json");
+        return file.exists() && file.delete();
     }
 }
